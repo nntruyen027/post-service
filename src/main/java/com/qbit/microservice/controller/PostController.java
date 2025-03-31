@@ -58,7 +58,7 @@ public class PostController {
 
     @PostMapping("/{postId}/comments")
     public ResponseEntity<?> createComment(@PathVariable Long postId, @RequestBody PostComment postComment) {
-        return ResponseEntity.ok(postCommentService.createOne(postComment));
+        return ResponseEntity.ok(postCommentService.createOne(postId, postComment));
     }
 
     @PutMapping("/comments/{commentId}")
@@ -66,13 +66,19 @@ public class PostController {
         return ResponseEntity.ok(postCommentService.updateOne(commentId, postComment));
     }
 
+    @DeleteMapping("/comments/admin/{commentId}")
+    @PreAuthorize("hasRole('admin')")
+    public ResponseEntity<?> deleteCommentByAdmin(@PathVariable Long commentId) {
+        postCommentService.deleteOneByAdmin(commentId);
+        return ResponseEntity.noContent().build();
+    }
+
     @DeleteMapping("/comments/{commentId}")
     public ResponseEntity<?> deleteComment(@PathVariable Long commentId) {
         postCommentService.deleteOne(commentId);
         return ResponseEntity.noContent().build();
     }
-
-    // API cho PostFavorite
+    
     @GetMapping("/{postId}/favorites")
     public ResponseEntity<?> getFavoritesByPost(@PathVariable Long postId, Pageable pageable) {
         return ResponseEntity.ok(postFavoriteService.findByPostId(postId, pageable));

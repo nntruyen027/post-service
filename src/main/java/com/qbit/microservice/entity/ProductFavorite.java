@@ -25,4 +25,7 @@ public class ProductFavorite {
 
     @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
+
+    @Version
+    private Integer version;
 }

@@ -1,7 +1,8 @@
 package com.qbit.microservice.service;
 
-import com.qbit.microservice.client.AuthServiceClient;
-import com.qbit.microservice.dto.AccountDto;
+import com.qbit.microservice.client.UserServiceClient;
+import com.qbit.microservice.dto.PostFavoriteDto;
+import com.qbit.microservice.dto.UserDto;
 import com.qbit.microservice.entity.PostFavorite;
 import com.qbit.microservice.repository.PostFavoriteRepository;
 import com.qbit.microservice.repository.PostRepository;
@@ -14,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
+import java.util.Optional;
 
 @Service
 public class PostFavoriteService {
@@ -23,8 +25,6 @@ public class PostFavoriteService {
     @Autowired
     private JwtUtil jwtUtil;
 
-    @Autowired
-    private AuthServiceClient authServiceClient;
 
     @Autowired
     private PostService postService;
@@ -32,41 +32,53 @@ public class PostFavoriteService {
     @Autowired
     private PostRepository postRepository;
 
+    @Autowired
+    private UserServiceClient userServiceClient;
+
+
     public Page<PostFavorite> findByUserId(Long id, Pageable pageable) {
         return postFavoriteRepository.findByUserId(id, pageable);
     }
 
     public Page<PostFavorite> findBySelf(Pageable pageable) {
-        ResponseEntity<AccountDto> response = authServiceClient.getUserByJwt("Bearer " + jwtUtil.getJwtFromContext());
+        ResponseEntity<UserDto> response = userServiceClient.getUserByJwt("Bearer " + jwtUtil.getJwtFromContext());
         if (!response.getStatusCode().is2xxSuccessful())
             throw new EntityNotFoundException("Failed to retrieve account information from auth service");
         Long userId = Objects.requireNonNull(response.getBody()).getId();
         return findByUserId(userId, pageable);
     }
 
-    public Page<PostFavorite> findByPostId(Long id, Pageable pageable) {
-        return postFavoriteRepository.findByPostId(id, pageable);
+    public Page<PostFavoriteDto> findByPostId(Long id, Pageable pageable) {
+        return postFavoriteRepository.findByPostId(id, pageable).map((e) -> {
+            ResponseEntity<UserDto> response = userServiceClient.getUserById("Bearer " + jwtUtil.getJwtFromContext(), e.getUserId());
+            if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null)
+                throw new EntityNotFoundException("Failed to retrieve account information from auth service");
+
+            return PostFavoriteDto.
+                    fromEntity(postFavoriteRepository.findById(e.getId()).orElseThrow(EntityNotFoundException::new), response.getBody());
+        });
     }
 
     public PostFavorite likePost(Long postId) {
-        ResponseEntity<AccountDto> response = authServiceClient.getUserByJwt("Bearer " + jwtUtil.getJwtFromContext());
+        ResponseEntity<UserDto> response = userServiceClient.getUserByJwt("Bearer " + jwtUtil.getJwtFromContext());
         if (!response.getStatusCode().is2xxSuccessful())
             throw new EntityNotFoundException("Failed to retrieve account information from auth service");
         Long userId = Objects.requireNonNull(response.getBody()).getId();
 
-        postFavoriteRepository.findByUserIdAndPostId(userId, postId).orElseThrow();
+        Optional<PostFavorite> present = postFavoriteRepository.findByUserIdAndPostId(userId, postId);
+        if (present.isPresent())
+            throw new EntityNotFoundException("Đã thích");
 
-        PostFavorite postFavorite = PostFavorite.builder()
-                .post(postRepository.findById(postId).orElseThrow(EntityNotFoundException::new))
-                .id(userId)
-                .build();
+        PostFavorite postFavorite = new PostFavorite();
+        postFavorite.setPost(postRepository.findById(postId).orElseThrow(EntityNotFoundException::new));
+        postFavorite.setUserId(userId);
 
         postService.addFavouritePost(postId);
         return postFavoriteRepository.save(postFavorite);
     }
 
     public void unLikePost(Long postId) {
-        ResponseEntity<AccountDto> response = authServiceClient.getUserByJwt("Bearer " + jwtUtil.getJwtFromContext());
+        ResponseEntity<UserDto> response = userServiceClient.getUserByJwt("Bearer " + jwtUtil.getJwtFromContext());
         if (!response.getStatusCode().is2xxSuccessful())
             throw new EntityNotFoundException("Failed to retrieve account information from auth service");
         Long userId = Objects.requireNonNull(response.getBody()).getId();

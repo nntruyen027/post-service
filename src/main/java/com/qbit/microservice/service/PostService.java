@@ -88,16 +88,17 @@ public class PostService {
         return PostDto.fromEntity(postRepository.save(post), false);
     }
 
-    public Post addFavouritePost(Long id) {
+
+    public void addFavouritePost(Long id) {
         Post post = postRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Không có bài viết"));
         post.setLikeCount(post.getLikeCount() + 1);
-        return postRepository.save(post);
+        postRepository.save(post);
     }
 
-    public Post removeFavouritePost(Long id) {
+    public void removeFavouritePost(Long id) {
         Post post = postRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Không có bài viết"));
         post.setLikeCount(post.getLikeCount() - 1);
-        return postRepository.save(post);
+        postRepository.save(post);
     }
 
     public PostDto updateOne(Long id, Post post) {
