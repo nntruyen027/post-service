@@ -8,10 +8,10 @@ import org.springframework.context.annotation.Configuration;
 @SpringBootApplication
 @Configuration
 @EnableFeignClients(basePackages = "com.qbit.microservice.client")
-public class InteractionServiceApplication {
+public class PostServiceApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(InteractionServiceApplication.class, args);
+        SpringApplication.run(PostServiceApplication.class, args);
     }
 
 }
