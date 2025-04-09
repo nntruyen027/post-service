@@ -26,6 +26,12 @@ public class PostController {
 
     @GetMapping()
     public ResponseEntity<?> findAll(Pageable pageable) {
+        return ResponseEntity.ok(postService.findAllByPublic(pageable));
+    }
+
+    @PreAuthorize("hasRole('admin')")
+    @GetMapping("/admin")
+    public ResponseEntity<?> findAllByAdmin(Pageable pageable) {
         return ResponseEntity.ok(postService.findAll(pageable));
     }
 
@@ -39,13 +45,14 @@ public class PostController {
         return ResponseEntity.ok(postService.createOne(post));
     }
 
-    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('admin')")
+    @PutMapping("/admin/{id}")
     public ResponseEntity<?> updateOne(@PathVariable Long id, @RequestBody Post post) {
         return ResponseEntity.ok(postService.updateOne(id, post));
     }
 
     @PreAuthorize("hasRole('admin')")
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/admin/{id}")
     public ResponseEntity<?> deleteOne(@PathVariable Long id) {
         postService.deleteOne(id);
         return ResponseEntity.noContent().build();
@@ -78,7 +85,7 @@ public class PostController {
         postCommentService.deleteOne(commentId);
         return ResponseEntity.noContent().build();
     }
-    
+
     @GetMapping("/{postId}/favorites")
     public ResponseEntity<?> getFavoritesByPost(@PathVariable Long postId, Pageable pageable) {
         return ResponseEntity.ok(postFavoriteService.findByPostId(postId, pageable));

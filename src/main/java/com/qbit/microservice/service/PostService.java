@@ -42,84 +42,89 @@ public class PostService {
     @Autowired
     private FileServerClient fileServerClient;
 
-    public Page<PostDto> findAll(Pageable pageable) {
-        ResponseEntity<AccountDto> response = authServiceClient.getUserByJwt("Bearer " + jwtUtil.getJwtFromContext());
-        if (!response.getStatusCode().is2xxSuccessful())
-            throw new EntityNotFoundException("Failed to retrieve account information from auth service");
-        Long userId = Objects.requireNonNull(response.getBody()).getId();
+    public Page<PostDto> findAllByPublic(Pageable pageable) {
+        Long userId = getCurrentUserId();
+        Page<Post> posts = postRepository.findByIsPublicTrue(pageable);
+        Set<Long> likedPostIds = getLikedPostIds(userId);
 
-        Page<Post> posts = postRepository.findAll(pageable);
-
-
-        Set<Long> likedPostIds = postFavoriteRepository.findByUserId(userId)
-                .stream()
-                .map(fav -> fav.getPost().getId())
-                .collect(Collectors.toSet());
-
-        return posts.map(post -> {
-            boolean isLiked = likedPostIds.contains(post.getId());
-            return PostDto.fromEntity(post, isLiked);
-        });
+        return posts.map(post -> PostDto.fromEntity(post, likedPostIds.contains(post.getId())));
     }
 
-    boolean checkLiked(Post post) {
-        ResponseEntity<AccountDto> response = authServiceClient.getUserByJwt("Bearer " + jwtUtil.getJwtFromContext());
-        if (!response.getStatusCode().is2xxSuccessful())
-            throw new EntityNotFoundException("Failed to retrieve account information from auth service");
-        Long userId = Objects.requireNonNull(response.getBody()).getId();
-        return postFavoriteRepository.existsByUserIdAndPostId(userId, post.getId());
+    public Page<PostDto> findAll(Pageable pageable) {
+        Long userId = getCurrentUserId();
+        Page<Post> posts = postRepository.findAll(pageable);
+        Set<Long> likedPostIds = getLikedPostIds(userId);
+
+        return posts.map(post -> PostDto.fromEntity(post, likedPostIds.contains(post.getId())));
     }
 
     public PostDto findOne(Long id) {
-        Post post = postRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Không có bài viết"));
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Không có bài viết"));
         List<PostComment> comments = postCommentRepository.findByPostId(post.getId());
 
         return PostDto.fromEntity(post, checkLiked(post), comments);
     }
 
     public PostDto createOne(Post post) {
-        ResponseEntity<AccountDto> response = authServiceClient.getUserByJwt("Bearer " + jwtUtil.getJwtFromContext());
-        if (!response.getStatusCode().is2xxSuccessful())
-            throw new EntityNotFoundException("Failed to retrieve account information from auth service");
-        Long userId = Objects.requireNonNull(response.getBody()).getId();
-
+        Long userId = getCurrentUserId();
         post.setUserId(userId);
-
         return PostDto.fromEntity(postRepository.save(post), false);
     }
 
-
     public void addFavouritePost(Long id) {
-        Post post = postRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Không có bài viết"));
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Không có bài viết"));
         post.setLikeCount(post.getLikeCount() + 1);
         postRepository.save(post);
     }
 
     public void removeFavouritePost(Long id) {
-        Post post = postRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Không có bài viết"));
-        post.setLikeCount(post.getLikeCount() - 1);
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Không có bài viết"));
+        post.setLikeCount(Math.max(0, post.getLikeCount() - 1));
         postRepository.save(post);
     }
 
     public PostDto updateOne(Long id, Post post) {
-        ResponseEntity<AccountDto> response = authServiceClient.getUserByJwt("Bearer " + jwtUtil.getJwtFromContext());
-        if (!response.getStatusCode().is2xxSuccessful())
-            throw new EntityNotFoundException("Failed to retrieve account information from auth service");
-        Long userId = Objects.requireNonNull(response.getBody()).getId();
-        Post updatedPost = postRepository.findByUserIdAndId(userId, id).orElseThrow(() -> new EntityNotFoundException("Không có bài viết"));
+        Post updatedPost = postRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Không có bài viết"));
         updatedPost.setImage(post.getImage());
         updatedPost.setTitle(post.getTitle());
         updatedPost.setContent(post.getContent());
+        updatedPost.setTags(post.getTags());
+        updatedPost.setIsPublic(post.getIsPublic());
+        updatedPost.setKeywords(post.getKeywords());
         return PostDto.fromEntity(postRepository.save(updatedPost), checkLiked(post));
     }
 
     public void deleteOne(Long id) {
-        Post post = postRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Không có bài viết"));
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Không có bài viết"));
         if (post.getImage() != null) {
             String[] parts = post.getImage().split("/");
             fileServerClient.deleteFile(parts[parts.length - 1]);
         }
-
         postRepository.deleteById(id);
+    }
+
+    private Long getCurrentUserId() {
+        ResponseEntity<AccountDto> response = authServiceClient.getUserByJwt("Bearer " + jwtUtil.getJwtFromContext());
+        if (!response.getStatusCode().is2xxSuccessful()) {
+            throw new EntityNotFoundException("Failed to retrieve account information from auth service");
+        }
+        return Objects.requireNonNull(response.getBody()).getId();
+    }
+
+    private Set<Long> getLikedPostIds(Long userId) {
+        return postFavoriteRepository.findByUserId(userId)
+                .stream()
+                .map(fav -> fav.getPost().getId())
+                .collect(Collectors.toSet());
+    }
+
+    private boolean checkLiked(Post post) {
+        Long userId = getCurrentUserId();
+        return postFavoriteRepository.existsByUserIdAndPostId(userId, post.getId());
     }
 }
