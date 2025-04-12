@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -33,6 +33,9 @@ public class Post {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
+    @Lob
+    private String description;
+
     @Column(nullable = false)
     private int likeCount = 0;
 
@@ -45,18 +48,22 @@ public class Post {
     @Column(nullable = false)
     private Boolean isDraft = false;
 
-    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @Column(nullable = false)
+    private int viewCount = 0;
+
+    @ElementCollection
+    @CollectionTable(name = "post_hashtags", joinColumns = @JoinColumn(name = "post_id"))
+    @Column(name = "hashtag")
+    private Set<String> hashtags;
+
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "post_tags",
             joinColumns = @JoinColumn(name = "post_id"),
             inverseJoinColumns = @JoinColumn(name = "tag_id")
     )
-    private Set<Tag> tags = new HashSet<>();
+    private List<Tag> tags;
 
-    @ElementCollection
-    @CollectionTable(name = "post_keywords", joinColumns = @JoinColumn(name = "post_id"))
-    @Column(name = "keyword")
-    private Set<String> keywords = new HashSet<>();
 
     @Column(nullable = false)
     private LocalDateTime createAt = LocalDateTime.now();

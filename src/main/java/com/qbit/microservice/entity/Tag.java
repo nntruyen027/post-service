@@ -18,4 +18,5 @@ public class Tag {
     private String color;
     @Lob
     private String description;
+
 }

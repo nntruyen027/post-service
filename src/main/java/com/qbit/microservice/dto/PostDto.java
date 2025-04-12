@@ -2,10 +2,12 @@ package com.qbit.microservice.dto;
 
 import com.qbit.microservice.entity.Post;
 import com.qbit.microservice.entity.PostComment;
+import com.qbit.microservice.entity.Tag;
 import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 @Data
 @AllArgsConstructor
@@ -29,8 +31,16 @@ public class PostDto {
     private List<PostComment> comments;
 
     private boolean isLiked = false;
+    private int viewCount;
 
     private LocalDateTime createAt = LocalDateTime.now();
+    private String description;
+
+    private Boolean isPublic;
+
+    private Set<String> hashtags;
+
+    private List<Tag> tags;
 
     public static PostDto fromEntity(Post entity, boolean isLiked, List<PostComment> comments) {
         return PostDto.builder()
@@ -42,6 +52,11 @@ public class PostDto {
                 .isLiked(isLiked)
                 .likeCount(entity.getLikeCount())
                 .comments(comments)
+                .viewCount(entity.getViewCount())
+                .description(entity.getDescription())
+                .isPublic(entity.getIsPublic())
+                .hashtags(entity.getHashtags())
+                .tags(entity.getTags())
                 .build();
     }
 
@@ -54,6 +69,11 @@ public class PostDto {
                 .content(entity.getContent())
                 .likeCount(entity.getLikeCount())
                 .isLiked(isLiked)
+                .viewCount(entity.getViewCount())
+                .isPublic(entity.getIsPublic())
+                .description(entity.getDescription())
+                .hashtags(entity.getHashtags())
+                .tags(entity.getTags())
                 .build();
     }
 

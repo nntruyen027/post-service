@@ -1,5 +1,6 @@
 package com.qbit.microservice.controller;
 
+import com.qbit.microservice.dto.PostDto;
 import com.qbit.microservice.entity.Post;
 import com.qbit.microservice.entity.PostComment;
 import com.qbit.microservice.service.PostCommentService;
@@ -10,6 +11,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 
 @RestController
@@ -25,14 +28,14 @@ public class PostController {
     private PostFavoriteService postFavoriteService;
 
     @GetMapping()
-    public ResponseEntity<?> findAll(Pageable pageable) {
-        return ResponseEntity.ok(postService.findAllByPublic(pageable));
+    public ResponseEntity<?> findAll(Pageable pageable, @RequestParam(required = false) String keyword) {
+        return ResponseEntity.ok(postService.findAllByPublic(keyword, pageable));
     }
 
     @PreAuthorize("hasRole('admin')")
     @GetMapping("/admin")
-    public ResponseEntity<?> findAllByAdmin(Pageable pageable) {
-        return ResponseEntity.ok(postService.findAll(pageable));
+    public ResponseEntity<?> findAllByAdmin(Pageable pageable, @RequestParam(required = false) String keyword) {
+        return ResponseEntity.ok(postService.findAll(keyword, pageable));
     }
 
     @GetMapping("/{id}")
@@ -43,6 +46,12 @@ public class PostController {
     @PostMapping()
     public ResponseEntity<?> createOne(@RequestBody Post post) {
         return ResponseEntity.ok(postService.createOne(post));
+    }
+
+    @PreAuthorize("hasRole('admin')")
+    @PostMapping("/admin/{postId}/tags")
+    public PostDto assignTags(@PathVariable Long postId, @RequestBody List<Long> tagIds) {
+        return postService.assignTagsToPost(postId, tagIds);
     }
 
     @PreAuthorize("hasRole('admin')")
