@@ -32,8 +32,7 @@ public class PostDto {
 
     private boolean isLiked = false;
     private int viewCount;
-
-    private LocalDateTime createAt = LocalDateTime.now();
+    
     private String description;
 
     private Boolean isPublic;
@@ -41,6 +40,8 @@ public class PostDto {
     private Set<String> hashtags;
 
     private List<Tag> tags;
+
+    private LocalDateTime createAt;
 
     public static PostDto fromEntity(Post entity, boolean isLiked, List<PostComment> comments) {
         return PostDto.builder()
@@ -57,6 +58,7 @@ public class PostDto {
                 .isPublic(entity.getIsPublic())
                 .hashtags(entity.getHashtags())
                 .tags(entity.getTags())
+                .createAt(entity.getCreateAt())
                 .build();
     }
 
@@ -74,6 +76,7 @@ public class PostDto {
                 .description(entity.getDescription())
                 .hashtags(entity.getHashtags())
                 .tags(entity.getTags())
+                .createAt(entity.getCreateAt())
                 .build();
     }
 
