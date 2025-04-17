@@ -52,7 +52,7 @@ public class TagService {
     }
 
     public List<Tag> findByIds(@RequestBody List<Long> ids) {
-        return tagRepository.findAllById(ids);
+        return tagRepository.findAllByIdIn(ids);
     }
 
 }

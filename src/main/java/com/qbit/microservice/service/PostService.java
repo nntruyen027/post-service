@@ -53,6 +53,7 @@ public class PostService {
         return posts.map(post -> PostDto.fromEntity(post, likedPostIds.contains(post.getId())));
     }
 
+
     public Page<PostDto> findAll(String keyword, Pageable pageable) {
         Long userId = getCurrentUserId();
         Page<Post> posts = getPostsByKeyword(keyword, pageable, false);
@@ -128,6 +129,8 @@ public class PostService {
     }
 
     private Long getCurrentUserId() {
+        if (jwtUtil.getJwtFromContext() == null)
+            return null;
         ResponseEntity<AccountDto> response = authServiceClient.getUserByJwt("Bearer " + jwtUtil.getJwtFromContext());
         if (!response.getStatusCode().is2xxSuccessful()) {
             throw new EntityNotFoundException("Failed to retrieve account information from auth service");
@@ -136,6 +139,8 @@ public class PostService {
     }
 
     private Set<Long> getLikedPostIds(Long userId) {
+        if (userId == null)
+            return null;
         return postFavoriteRepository.findByUserId(userId)
                 .stream()
                 .map(fav -> fav.getPost().getId())
