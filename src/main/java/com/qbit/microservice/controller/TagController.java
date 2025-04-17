@@ -10,6 +10,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/tags")
 public class TagController {
@@ -47,6 +49,19 @@ public class TagController {
             Pageable pageable
     ) {
         return ResponseEntity.ok(tagService.findAll(keyword, pageable));
+    }
+
+    @GetMapping("/public")
+    public ResponseEntity<Page<Tag>> findAllPublic(
+            @RequestParam(required = false) String keyword,
+            Pageable pageable
+    ) {
+        return ResponseEntity.ok(tagService.findAll(keyword, pageable));
+    }
+
+    @PostMapping("/public/findByIds")
+    public ResponseEntity<List<Tag>> findByIds(@RequestBody List<Long> ids) {
+        return ResponseEntity.ok(tagService.findByIds(ids));
     }
 
 }

@@ -27,7 +27,7 @@ public class PostController {
     @Autowired
     private PostFavoriteService postFavoriteService;
 
-    @GetMapping()
+    @GetMapping("/public")
     public ResponseEntity<?> findAll(Pageable pageable, @RequestParam(required = false) String keyword) {
         return ResponseEntity.ok(postService.findAllByPublic(keyword, pageable));
     }
@@ -40,6 +40,11 @@ public class PostController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> findOne(@PathVariable Long id) {
+        return ResponseEntity.ok(postService.findOne(id));
+    }
+
+    @GetMapping("/public/{id}")
+    public ResponseEntity<?> findOnePublic(@PathVariable Long id) {
         return ResponseEntity.ok(postService.findOne(id));
     }
 
