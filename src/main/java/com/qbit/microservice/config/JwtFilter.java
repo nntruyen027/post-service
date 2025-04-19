@@ -32,25 +32,18 @@ public class JwtFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         final String authorizationHeader = request.getHeader("Authorization");
-        System.out.println(authorizationHeader);
 
-        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
-            chain.doFilter(request, response);
-            return;
-        }
+        String username = null;
+        String jwt = null;
 
-        String jwt = authorizationHeader.substring(7);
-        if (jwt.isBlank()) {
-            chain.doFilter(request, response);
-            return;
-        }
-
-        String username;
-        try {
-            username = jwtUtil.extractUsername(jwt);
-        } catch (Exception e) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            return;
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            jwt = authorizationHeader.substring(7);
+            try {
+                username = jwtUtil.extractUsername(jwt);
+            } catch (Exception e) {
+                chain.doFilter(request, response); // Cho qua, xử lý tiếp trong SecurityConfig
+                return;
+            }
         }
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
@@ -59,23 +52,16 @@ public class JwtFilter extends OncePerRequestFilter {
                 AccountDto accountDto = responseEntity.getBody();
 
                 if (accountDto != null && jwtUtil.validateToken(jwt, accountDto.getUsername())) {
-                    JwtAuthentication authenticationToken = new JwtAuthentication(
-                            accountDto,
-                            null,
-                            accountDto.getRoles().stream()
-                                    .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getRoleName()))
-                                    .toList(),
-                            jwt
-                    );
+                    JwtAuthentication authenticationToken =
+                            new JwtAuthentication(accountDto, null,
+                                    accountDto.getRoles().stream()
+                                            .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getRoleName()))
+                                            .toList(),
+                                    jwt);
                     authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-                } else {
-                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                    return;
                 }
-            } catch (Exception e) {
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                return;
+            } catch (Exception ex) {
             }
         }
 

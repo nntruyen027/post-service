@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 
@@ -51,7 +50,7 @@ public class TagService {
         return tagRepository.findByNameContainingIgnoreCase(keyword, pageable);
     }
 
-    public List<Tag> findByIds(@RequestBody List<Long> ids) {
+    public List<Tag> findByIds(List<Long> ids) {
         return tagRepository.findAllByIdIn(ids);
     }
 
