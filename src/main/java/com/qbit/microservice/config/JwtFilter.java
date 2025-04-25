@@ -41,7 +41,7 @@ public class JwtFilter extends OncePerRequestFilter {
             try {
                 username = jwtUtil.extractUsername(jwt);
             } catch (Exception e) {
-                chain.doFilter(request, response); // Cho qua, xử lý tiếp trong SecurityConfig
+                chain.doFilter(request, response);
                 return;
             }
         }

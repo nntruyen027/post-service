@@ -1,8 +1,8 @@
 package com.qbit.microservice.service;
 
-import com.qbit.microservice.client.UserServiceClient;
+import com.qbit.microservice.client.AuthServiceClient;
+import com.qbit.microservice.dto.AccountDto;
 import com.qbit.microservice.dto.PostCommentDto;
-import com.qbit.microservice.dto.UserDto;
 import com.qbit.microservice.entity.PostComment;
 import com.qbit.microservice.repository.PostCommentRepository;
 import com.qbit.microservice.repository.PostRepository;
@@ -23,14 +23,15 @@ public class PostCommentService {
     private PostRepository postRepository;
 
     @Autowired
-    private UserServiceClient userServiceClient;
+    private AuthServiceClient authServiceClient;
 
     @Autowired
     private JwtUtil jwtUtil;
 
     public Page<PostCommentDto> findAllByPost(Long id, Pageable pageable) {
+
         return postCommentRepository.findByPostId(id, pageable).map((e) -> {
-            ResponseEntity<UserDto> response = userServiceClient.getUserById("Bearer " + jwtUtil.getJwtFromContext(), e.getUserId());
+            ResponseEntity<AccountDto> response = authServiceClient.getUserById(e.getUserId());
             if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null)
                 throw new EntityNotFoundException("Failed to retrieve account information from auth service");
             return PostCommentDto.
@@ -41,7 +42,7 @@ public class PostCommentService {
     public PostCommentDto findOne(Long id) {
         PostComment postComment = postCommentRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Khong co comment"));
 
-        ResponseEntity<UserDto> response = userServiceClient.getUserById("Bearer " + jwtUtil.getJwtFromContext(), postComment.getUserId());
+        ResponseEntity<AccountDto> response = authServiceClient.getUserById(postComment.getUserId());
         if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null)
             throw new EntityNotFoundException("Failed to retrieve account information from auth service");
 
@@ -49,29 +50,29 @@ public class PostCommentService {
                 fromEntity(postComment, response.getBody());
     }
 
-    public PostComment createOne(Long postId, PostComment postComment) {
-        ResponseEntity<UserDto> response = userServiceClient.getUserByJwt("Bearer " + jwtUtil.getJwtFromContext());
+    public PostCommentDto createOne(Long postId, PostComment postComment) {
+        ResponseEntity<AccountDto> response = authServiceClient.getUserByJwt("Bearer " + jwtUtil.getJwtFromContext());
         if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null)
             throw new EntityNotFoundException("Failed to retrieve account information from auth service");
 
         postComment.setPost(postRepository.findById(postId).orElseThrow());
         postComment.setUserId(response.getBody().getId());
-        return postCommentRepository.save(postComment);
+        return PostCommentDto.fromEntity(postCommentRepository.save(postComment), response.getBody());
     }
 
-    public PostComment updateOne(Long id, PostComment postComment) {
-        ResponseEntity<UserDto> response = userServiceClient.getUserByJwt("Bearer " + jwtUtil.getJwtFromContext());
+    public PostCommentDto updateOne(Long id, PostComment postComment) {
+        ResponseEntity<AccountDto> response = authServiceClient.getUserByJwt("Bearer " + jwtUtil.getJwtFromContext());
         if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null)
             throw new EntityNotFoundException("Failed to retrieve account information from auth service");
 
         PostComment updatedComment = postCommentRepository.findByIdAndUserId(id, response.getBody().getId())
                 .orElseThrow(() -> new EntityNotFoundException("Khong co comment"));
         updatedComment.setContent(postComment.getContent());
-        return postCommentRepository.save(updatedComment);
+        return PostCommentDto.fromEntity(postCommentRepository.save(updatedComment), response.getBody());
     }
 
     public void deleteOne(Long id) {
-        ResponseEntity<UserDto> response = userServiceClient.getUserByJwt("Bearer " + jwtUtil.getJwtFromContext());
+        ResponseEntity<AccountDto> response = authServiceClient.getUserByJwt("Bearer " + jwtUtil.getJwtFromContext());
         if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null)
             throw new EntityNotFoundException("Failed to retrieve account information from auth service");
         PostComment deletedComment = postCommentRepository.findByIdAndUserId(id, response.getBody().getId())

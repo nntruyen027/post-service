@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class PostCommentDto {
+public class CommentDto {
     private Long id;
 
     private Post post;
@@ -23,13 +23,12 @@ public class PostCommentDto {
 
     private LocalDateTime createdAt;
 
-    public static PostCommentDto fromEntity(PostComment entity, AccountDto account) {
-        return PostCommentDto.builder()
-                .id(entity.getId())
-                .post(entity.getPost())
-                .user(account)
-                .content(entity.getContent())
-                .createdAt(entity.getCreatedAt())
+    public static CommentDto fromEntity(PostComment comment, AccountDto user) {
+        return CommentDto.builder()
+                .id(comment.getId())
+                .post(comment.getPost())
+                .user(user)
+                .createdAt(comment.getCreatedAt())
                 .build();
     }
 }

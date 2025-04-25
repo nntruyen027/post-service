@@ -1,6 +1,5 @@
 package com.qbit.microservice.controller;
 
-import com.qbit.microservice.dto.PostDto;
 import com.qbit.microservice.entity.Post;
 import com.qbit.microservice.entity.PostComment;
 import com.qbit.microservice.service.PostCommentService;
@@ -11,8 +10,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 
 @RestController
@@ -43,6 +40,11 @@ public class PostController {
         return ResponseEntity.ok(postService.findOne(id));
     }
 
+    @GetMapping("/favorites")
+    public ResponseEntity<?> findFavouritePosts(Pageable pageable) {
+        return ResponseEntity.ok(postFavoriteService.findBySelf(pageable));
+    }
+
     @GetMapping("/public/{id}")
     public ResponseEntity<?> findOnePublic(@PathVariable Long id) {
         return ResponseEntity.ok(postService.findOne(id));
@@ -53,11 +55,6 @@ public class PostController {
         return ResponseEntity.ok(postService.createOne(post));
     }
 
-    @PreAuthorize("hasRole('admin')")
-    @PostMapping("/admin/{postId}/tags")
-    public PostDto assignTags(@PathVariable Long postId, @RequestBody List<Long> tagIds) {
-        return postService.assignTagsToPost(postId, tagIds);
-    }
 
     @PreAuthorize("hasRole('admin')")
     @PutMapping("/admin/{id}")

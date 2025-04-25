@@ -17,13 +17,13 @@ public class PostFavoriteDto {
 
     private Post post;
 
-    private UserDto user;
+    private AccountDto user;
 
     private String content;
 
     private LocalDateTime createdAt;
 
-    public static PostFavoriteDto fromEntity(PostFavorite entity, UserDto account) {
+    public static PostFavoriteDto fromEntity(PostFavorite entity, AccountDto account) {
         return PostFavoriteDto.builder()
                 .id(entity.getId())
                 .post(entity.getPost())
