@@ -48,15 +48,16 @@ public class PostController {
         return ResponseEntity.ok(postService.findAll(keyword, pageable));
     }
 
+    @GetMapping("/favorites")
+    public ResponseEntity<?> findFavouritePosts(Pageable pageable) {
+        return ResponseEntity.ok(postFavoriteService.findBySelf(pageable));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<?> findOne(@PathVariable Long id) {
         return ResponseEntity.ok(postService.findOne(id));
     }
 
-    @GetMapping("/favorites")
-    public ResponseEntity<?> findFavouritePosts(Pageable pageable) {
-        return ResponseEntity.ok(postFavoriteService.findBySelf(pageable));
-    }
 
     @GetMapping("/public/{id}")
     public ResponseEntity<?> findOnePublic(@PathVariable Long id) {
