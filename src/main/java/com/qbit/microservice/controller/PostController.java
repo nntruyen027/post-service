@@ -12,6 +12,11 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 
+/**
+ * Handles RESTful API requests for operations related to posts, comments, and post favorites.
+ * Provides endpoints for retrieving, creating, updating, and deleting posts and comments,
+ * as well as managing user post favorites.
+ */
 @RestController
 @RequestMapping("/posts")
 public class PostController {
@@ -29,6 +34,14 @@ public class PostController {
         return ResponseEntity.ok(postService.findAllByPublic(keyword, pageable));
     }
 
+    /**
+     * Retrieves a paginated list of posts available to admin users, with an optional keyword for filtering.
+     * This method is accessible only to users with the "admin" role.
+     *
+     * @param pageable the pagination information, including page number, size, and sorting details
+     * @param keyword  an optional keyword to filter posts; if null or empty, all posts will be retrieved
+     * @return a {@link ResponseEntity} containing the paginated list of posts, wrapped in a {@link Page<PostDto>} object
+     */
     @PreAuthorize("hasRole('admin')")
     @GetMapping("/admin")
     public ResponseEntity<?> findAllByAdmin(Pageable pageable, @RequestParam(required = false) String keyword) {
